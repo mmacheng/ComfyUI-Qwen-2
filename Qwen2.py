@@ -1,7 +1,4 @@
-import torch
 import os
-import io
-from io import BytesIO
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 device = "cuda"
@@ -24,12 +21,24 @@ class Qwen2_ModelLoader_Zho:
     CATEGORY = "⛱️Qwen2"
   
     def load_model(self, model_name):
-        model = AutoModelForCausalLM.from_pretrained(
-            model_name, 
-            device_map="cuda", 
-            torch_dtype="auto", 
-        )
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model_path = os.path.join(os.getcwd(), "custom_nodes", "ComfyUI-Qwen-2", "qwen2")
+        
+        # Check if model files exist in the specified path
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"模型未找到，请手动下载模型到 {model_path} 文件夹下。")
+        
+        try:
+            model = AutoModelForCausalLM.from_pretrained(
+                model_path,  # 使用手动下载的模型路径
+                device_map="cuda", 
+                torch_dtype="auto", 
+            )
+            tokenizer = AutoTokenizer.from_pretrained(model_path)
+        except OSError:
+            # 模型加载失败时的提示信息
+            print(f"模型加载失败，请检查模型路径 {model_path} 是否正确。")
+            raise
+
         return model, tokenizer
 
 
@@ -148,7 +157,6 @@ class Qwen2_Chat_Zho:
             formatted_history.append("-" * 40)  # Add a separator line
         return "\n".join(formatted_history)
 
-        
 
 NODE_CLASS_MAPPINGS = {
     "Qwen2_ModelLoader_Zho": Qwen2_ModelLoader_Zho,
